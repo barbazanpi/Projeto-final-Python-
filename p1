@@ -1,0 +1,102 @@
+# modelo.py
+import pandas as pd
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+
+class Modelo:
+    def __init__(self, path):
+        """
+        Inicializa a classe Modelo com o caminho do arquivo CSV
+        """
+        self.path = path
+        self.df = None
+        self.X_train = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
+        self.svm_model = None
+        self.lr_model = None
+
+    def CarregarDataset(self):
+        """
+        Carrega o dataset Iris a partir de um arquivo CSV.
+        """
+        self.df = pd.read_csv(self.path)
+        print("Dataset carregado com sucesso. Aqui estão as primeiras linhas:")
+        print(self.df.head())  # Exibe as primeiras linhas para revisão
+
+    def TratamentoDeDados(self):
+        """
+        Realiza o pré-processamento dos dados:
+        - Verifica e trata valores nulos
+        - Separa as colunas de características e a coluna alvo
+        - Escalonamento das características
+        """
+        if self.df.isnull().sum().any():
+            print("Existem dados faltantes. Tratando...")
+            self.df = self.df.dropna()  # Removendo linhas com dados faltantes
+
+        X = self.df.drop(columns=["Species"])  # Separa as características
+        y = self.df["Species"]  # A variável alvo
+
+        # Divisão dos dados em treino (70%) e teste (30%)
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+            X, y, test_size=0.3, random_state=42
+        )
+        
+        # Escalonamento das características para melhorar o desempenho dos modelos
+        scaler = StandardScaler()
+        self.X_train = scaler.fit_transform(self.X_train)
+        self.X_test = scaler.transform(self.X_test)
+
+    def Treinamento(self):
+        """
+        Treina dois modelos: SVM e Regressão Logística.
+        """
+        # Criando os modelos
+        svm_model = SVC(kernel='linear')  # Modelo SVM com kernel linear
+        lr_model = LogisticRegression(max_iter=200)  # Modelo de Regressão Logística
+        
+        # Treinando os modelos com os dados de treino
+        svm_model.fit(self.X_train, self.y_train)
+        lr_model.fit(self.X_train, self.y_train)
+
+        # Armazenando os modelos treinados
+        self.svm_model = svm_model
+        self.lr_model = lr_model
+
+        # Validação cruzada para verificar a performance dos modelos
+        svm_cv_score = cross_val_score(svm_model, self.X_train, self.y_train, cv=5)
+        lr_cv_score = cross_val_score(lr_model, self.X_train, self.y_train, cv=5)
+
+        print(f"Acurácia média do SVM (cross-validation): {svm_cv_score.mean():.4f}")
+        print(f"Acurácia média da Regressão Logística (cross-validation): {lr_cv_score.mean():.4f}")
+
+    def Teste(self):
+        """
+        Avalia a acurácia dos modelos treinados nos dados de teste.
+        """
+        # Realizando previsões com os modelos nos dados de teste
+        svm_pred = self.svm_model.predict(self.X_test)
+        lr_pred = self.lr_model.predict(self.X_test)
+
+        # Calculando a acurácia dos modelos
+        svm_accuracy = accuracy_score(self.y_test, svm_pred)
+        lr_accuracy = accuracy_score(self.y_test, lr_pred)
+
+        # Exibindo os resultados
+        print(f"Acurácia do SVM nos dados de teste: {svm_accuracy:.4f}")
+        print(f"Acurácia da Regressão Logística nos dados de teste: {lr_accuracy:.4f}")
+
+    def Train(self):
+        """
+        Orquestra o fluxo de execução: Carrega dados, faz o pré-processamento,
+        treina os modelos e avalia o desempenho.
+        """
+        self.CarregarDataset()  # Carregar o dataset
+        self.TratamentoDeDados()  # Realizar o pré-processamento dos dados
+        self.Treinamento()  # Treinar os modelos
+        self.Teste()  # Testar os modelos nos dados de teste
