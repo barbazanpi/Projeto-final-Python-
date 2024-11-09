@@ -1,0 +1,12 @@
+# main.py
+from modelo import Modelo  # Importa a classe Modelo do arquivo modelo.py
+
+if __name__ == "__main__":
+    # Caminho para o arquivo CSV (substitua com o caminho correto do seu arquivo)
+    caminho_do_arquivo = 'iris.data'  # Altere para o caminho do arquivo, se necessário
+    
+    # Cria uma instância da classe Modelo
+    modelo = Modelo(path=caminho_do_arquivo)
+    
+    # Executa o processo de treinamento e teste
+    modelo.Train()
